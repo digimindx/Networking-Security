@@ -14,7 +14,7 @@
 *   **مثال:** 192.168.1.1
 
 ### 3. مكونات العنوان
-![[NEXT-ACADEMY/02-Network & Security Track/Phase 2 – Cisco Networking Foundations (Weeks 5–12)/Module 3- Cisco Certified Network Associate (CCNA)/01-Networking Fundamentals/Untitled Diagram.svg]]
+![[NEXT-ACADEMY/02-Network & Security Track/Phase 02 – Cisco Networking Foundations (Weeks 5–12)/Module 3- Cisco Certified Network Associate (CCNA)/01-Networking Fundamentals/Untitled Diagram.svg]]
 يتكون عنوان (IPv4) من جزأين رئيسيين:
 1.  **جزء الشبكة (Network ID):** يحدد الشبكة التي ينتمي إليها الجهاز.
 2.  **جزء المضيف (Host ID):** يحدد الجهاز المحدد داخل تلك الشبكة.
