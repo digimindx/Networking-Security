@@ -96,7 +96,41 @@ router ospf 1
  network 10.0.24.0 0.0.0.3 area 2
 ```
 
-*(قم بتكوين R3 و R4 بنفس الطريقة بإعلان واجهاتهما في Area 1 و Area 2 على التوالي).*
+إعدادات R3
+
+```cisco
+hostname R3
+!
+interface Loopback0
+ ip address 3.3.3.3 255.255.255.255
+!
+interface GigabitEthernet1
+ description Link-to-R1
+ ip address 10.0.13.2 255.255.255.252
+!
+router ospf 1
+ router-id 3.3.3.3
+ network 3.3.3.3 0.0.0.0 area 1
+ network 10.0.13.0 0.0.0.3 area 1
+```
+
+اعدادات R4
+
+```cisco
+hostname R4
+!
+interface Loopback0
+ ip address 4.4.4.4 255.255.255.255
+!
+interface GigabitEthernet1
+ description Link-to-R2
+ ip address 10.0.24.2 255.255.255.252
+!
+router ospf 1
+ router-id 4.4.4.4
+ network 4.4.4.4 0.0.0.0 area 2
+ network 10.0.24.0 0.0.0.3 area 2
+```
 
 ---
 
