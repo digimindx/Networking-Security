@@ -68,10 +68,12 @@ interface GigabitEthernet1
  description Link-to-R2-Area0
  ip address 10.0.12.1 255.255.255.252
  ip ospf authentication key-chain OSPF_AREA0_AUTH
+ no shutdown
 !
 interface GigabitEthernet2
  description Link-to-R3-Area1
  ip address 10.0.13.1 255.255.255.252
+ no shutdown
 !
 ! --- Keychain for SHA-256 Authentication (Area 0) ---
 key chain OSPF_AREA0_AUTH
@@ -117,14 +119,17 @@ interface GigabitEthernet1
  description Link-to-R1-Area0
  ip address 10.0.12.2 255.255.255.252
  ip ospf authentication key-chain OSPF_AREA0_AUTH
+ no shutdown
 !
 interface GigabitEthernet2
  description Link-to-R4-Area2
  ip address 10.0.24.1 255.255.255.252
+ no shutdown
 !
 interface GigabitEthernet3
  description Link-to-ISP-eBGP
  ip address 203.0.113.1 255.255.255.252
+ no shutdown
 !
 ! --- Keychain for SHA-256 Authentication (Area 0) ---
 key chain OSPF_AREA0_AUTH
@@ -180,10 +185,12 @@ interface Loopback0
 interface GigabitEthernet1
  description Link-to-R1-Area1
  ip address 10.0.13.2 255.255.255.252
+ no shutdown
 !
 interface GigabitEthernet2
  description Link-to-PC1
  ip address 192.168.1.1 255.255.255.0
+ no shutdown
 !
 ! --- OSPF Configuration ---
 router ospf 1
@@ -213,10 +220,12 @@ interface Loopback0
 interface GigabitEthernet1
  description Link-to-R2-Area2
  ip address 10.0.24.2 255.255.255.252
+ no shutdown
 !
 interface GigabitEthernet2
  description Link-to-PC2
  ip address 192.168.2.1 255.255.255.0
+ no shutdown
 !
 ! --- Static Route for External Network (to be redistributed) ---
 ip route 192.168.99.0 255.255.255.0 Null0
@@ -247,10 +256,12 @@ hostname ISP
 interface GigabitEthernet1
  description Link-to-R2-eBGP
  ip address 203.0.113.2 255.255.255.252
+ no shutdown
 !
 interface GigabitEthernet2
  description Simulated-Internet
  ip address 198.51.100.1 255.255.255.0
+ no shutdown
 !
 ! --- BGP Configuration ---
 router bgp 65002
