@@ -67,6 +67,7 @@ interface Loopback0
 interface GigabitEthernet1
  description Link-to-R2-Area0
  ip address 10.0.12.1 255.255.255.252
+ ip ospf authentication key-chain OSPF_AREA0_AUTH
 !
 interface GigabitEthernet2
  description Link-to-R3-Area1
@@ -115,6 +116,7 @@ interface Loopback0
 interface GigabitEthernet1
  description Link-to-R1-Area0
  ip address 10.0.12.2 255.255.255.252
+ ip ospf authentication key-chain OSPF_AREA0_AUTH
 !
 interface GigabitEthernet2
  description Link-to-R4-Area2
