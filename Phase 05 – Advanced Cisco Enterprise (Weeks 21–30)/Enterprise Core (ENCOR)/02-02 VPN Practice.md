@@ -89,19 +89,23 @@ interface Tunnel0
  tunnel source GigabitEthernet1
  tunnel mode gre multipoint
  tunnel protection ipsec profile FLEXVPN_PROFILE
+ no shutdown
 !
-! --- 2. Routing (OSPF & NAT) ---
+! --- 2. Routing (OSPF & Default Route) ---
+ip route 0.0.0.0 0.0.0.0 203.0.113.2
+!
 router ospf 1
  network 192.168.10.0 0.0.0.255 area 0
  network 10.0.0.0 0.0.0.255 area 0
 !
+! --- 3. NAT Exemption ---
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
  deny ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
  deny ip 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255
  permit ip 192.168.10.0 0.0.0.255 any
 !
-! --- 3. IKEv2 (Phase 1 & 2 combined in FlexVPN) ---
+! --- 4. IKEv2 & IPsec ---
 crypto ikev2 keyring HQ-KEYS
  peer BRANCHES
   address 0.0.0.0 0.0.0.0
@@ -117,7 +121,7 @@ crypto ikev2 profile HQ-PROFILE
 crypto ipsec profile FLEXVPN_PROFILE
  set ikev2-profile HQ-PROFILE
 !
-! --- 4. Remote Access (AnyConnect SSL VPN) ---
+! --- 5. Remote Access (AnyConnect SSL VPN) ---
 ip local pool ANYCONNECT-POOL 10.10.10.10 10.10.10.50
 !
 webvpn
@@ -145,6 +149,7 @@ username vpnuser password 0 Cisco123
 ```text
 hostname BR1-RTR
 !
+! --- 1. Underlay & Interfaces ---
 interface GigabitEthernet1
  ip address 203.0.113.5 255.255.255.252
  ip nat outside
@@ -164,17 +169,23 @@ interface Tunnel0
  tunnel source GigabitEthernet1
  tunnel mode gre multipoint
  tunnel protection ipsec profile FLEXVPN_PROFILE
+ no shutdown
+!
+! --- 2. Routing (OSPF & Default Route) ---
+ip route 0.0.0.0 0.0.0.0 203.0.113.6
 !
 router ospf 1
  network 192.168.20.0 0.0.0.255 area 0
  network 10.0.0.0 0.0.0.255 area 0
 !
+! --- 3. NAT Exemption ---
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
  deny ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
  deny ip 192.168.20.0 0.0.0.255 192.168.30.0 0.0.0.255
  permit ip 192.168.20.0 0.0.0.255 any
 !
+! --- 4. IKEv2 & IPsec ---
 crypto ikev2 keyring BR1-KEYS
  peer HQ
   address 203.0.113.1
@@ -194,6 +205,7 @@ crypto ipsec profile FLEXVPN_PROFILE
 ```text
 hostname BR2-RTR
 !
+! --- 1. Underlay & Interfaces ---
 interface GigabitEthernet1
  ip address 203.0.113.9 255.255.255.252
  ip nat outside
@@ -213,17 +225,23 @@ interface Tunnel0
  tunnel source GigabitEthernet1
  tunnel mode gre multipoint
  tunnel protection ipsec profile FLEXVPN_PROFILE
+ no shutdown
+!
+! --- 2. Routing (OSPF & Default Route) ---
+ip route 0.0.0.0 0.0.0.0 203.0.113.10
 !
 router ospf 1
  network 192.168.30.0 0.0.0.255 area 0
  network 10.0.0.0 0.0.0.255 area 0
 !
+! --- 3. NAT Exemption ---
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
  deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255
  deny ip 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255
  permit ip 192.168.30.0 0.0.0.255 any
 !
+! --- 4. IKEv2 & IPsec ---
 crypto ikev2 keyring BR2-KEYS
  peer HQ
   address 203.0.113.1
@@ -272,8 +290,7 @@ ip route 0.0.0.0 0.0.0.0 Null0
 
 #### 1. جهاز كمبيوتر المقر الرئيسي (HQ-PC)
 ```bash
-# تعيين عنوان IP والبوابة
-this is a shell script which will be sourced at boot
+!this is a shell script which will be sourced at boot
 hostname PC-HQ
 configurable user account
 USERNAME=cisco
@@ -285,7 +302,7 @@ ip route add default via 192.168.10.1
 
 #### 2. جهاز كمبيوتر الفرع الأول (BR1-PC)
 ```bash
-this is a shell script which will be sourced at boot
+!this is a shell script which will be sourced at boot
 hostname PC-BR1
 configurable user account
 USERNAME=cisco
@@ -297,7 +314,7 @@ ip route add default via 192.168.20.1
 
 #### 3. جهاز كمبيوتر الفرع الثاني (BR2-PC)
 ```bash
-this is a shell script which will be sourced at boot
+!this is a shell script which will be sourced at boot
 hostname PC-BR2
 configurable user account
 USERNAME=cisco
