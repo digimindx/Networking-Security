@@ -72,13 +72,16 @@ hostname HQ-RTR
 interface GigabitEthernet1
  ip address 203.0.113.1 255.255.255.252
  ip nat outside
+ no shutdown
 !
 interface GigabitEthernet2
  ip address 192.168.10.1 255.255.255.0
  ip nat inside
+ no shutdown
 !
 interface Tunnel0
  ip address 10.0.0.1 255.255.255.0
+ ip ospf network point-to-multipoint
  ip nhrp map 10.0.0.1 203.0.113.1
  ip nhrp network-id 100
  ip nhrp holdtime 300
@@ -94,6 +97,8 @@ router ospf 1
 !
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
+ deny ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
+ deny ip 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255
  permit ip 192.168.10.0 0.0.0.255 any
 !
 ! --- 3. IKEv2 (Phase 1 & 2 combined in FlexVPN) ---
@@ -112,14 +117,11 @@ crypto ikev2 profile HQ-PROFILE
 crypto ipsec profile FLEXVPN_PROFILE
  set ikev2-profile HQ-PROFILE
 !
-! --- 4. NHRP Server & DMVPN Stage 3 ---
-! (NHRP is configured in Tunnel0 above)
-!
-! --- 5. Remote Access (AnyConnect SSL VPN) ---
+! --- 4. Remote Access (AnyConnect SSL VPN) ---
 ip local pool ANYCONNECT-POOL 10.10.10.10 10.10.10.50
 !
 webvpn
- anyconnect image disk0:/anyconnect-win-4.10.01075-webdeploy-k9.pkg 1
+ ! anyconnect image disk0:/anyconnect-win-4.10.01075-webdeploy-k9.pkg 1
  anyconnect enable
  anyconnect certificate-trust
 !
@@ -146,13 +148,16 @@ hostname BR1-RTR
 interface GigabitEthernet1
  ip address 203.0.113.5 255.255.255.252
  ip nat outside
+ no shutdown
 !
 interface GigabitEthernet2
  ip address 192.168.20.1 255.255.255.0
  ip nat inside
+ no shutdown
 !
 interface Tunnel0
  ip address 10.0.0.2 255.255.255.0
+ ip ospf network point-to-multipoint
  ip nhrp nhs 10.0.0.1 nbma 203.0.113.1
  ip nhrp network-id 100
  ip nhrp holdtime 300
@@ -166,6 +171,8 @@ router ospf 1
 !
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
+ deny ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
+ deny ip 192.168.20.0 0.0.0.255 192.168.30.0 0.0.0.255
  permit ip 192.168.20.0 0.0.0.255 any
 !
 crypto ikev2 keyring BR1-KEYS
@@ -190,13 +197,16 @@ hostname BR2-RTR
 interface GigabitEthernet1
  ip address 203.0.113.9 255.255.255.252
  ip nat outside
+ no shutdown
 !
 interface GigabitEthernet2
  ip address 192.168.30.1 255.255.255.0
  ip nat inside
+ no shutdown
 !
 interface Tunnel0
  ip address 10.0.0.3 255.255.255.0
+ ip ospf network point-to-multipoint
  ip nhrp nhs 10.0.0.1 nbma 203.0.113.1
  ip nhrp network-id 100
  ip nhrp holdtime 300
@@ -210,6 +220,8 @@ router ospf 1
 !
 ip nat inside source list NAT-ACL interface GigabitEthernet1 overload
 ip access-list extended NAT-ACL
+ deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255
+ deny ip 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255
  permit ip 192.168.30.0 0.0.0.255 any
 !
 crypto ikev2 keyring BR2-KEYS
@@ -231,17 +243,21 @@ crypto ipsec profile FLEXVPN_PROFILE
 ```text
 hostname INET-RTR
 !
-interface GigabitEthernet1
+interface GigabitEthernet0/0
  ip address 203.0.113.2 255.255.255.252
+ no shutdown
 !
-interface GigabitEthernet2
+interface GigabitEthernet0/1
  ip address 203.0.113.6 255.255.255.252
+ no shutdown
 !
-interface GigabitEthernet3
+interface GigabitEthernet0/2
  ip address 203.0.113.10 255.255.255.252
+ no shutdown
 !
-interface GigabitEthernet4
+interface GigabitEthernet0/3
  ip address 198.51.100.1 255.255.255.0
+ no shutdown
 !
 router ospf 1
  default-information originate always
@@ -257,40 +273,51 @@ ip route 0.0.0.0 0.0.0.0 Null0
 #### 1. جهاز كمبيوتر المقر الرئيسي (HQ-PC)
 ```bash
 # تعيين عنوان IP والبوابة
-sudo ip addr add 192.168.10.10/24 dev eth0
-sudo ip link set eth0 up
-sudo ip route add default via 192.168.10.1
-
-# اختبار الاتصال
-ping 192.168.10.1
+this is a shell script which will be sourced at boot
+hostname PC-HQ
+configurable user account
+USERNAME=cisco
+PASSWORD=cisco
+ip addr add 192.168.10.10/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.10.1
 ```
 
 #### 2. جهاز كمبيوتر الفرع الأول (BR1-PC)
 ```bash
-sudo ip addr add 192.168.20.10/24 dev eth0
-sudo ip link set eth0 up
-sudo ip route add default via 192.168.20.1
-
-# اختبار الاتصال عبر نفق DMVPN إلى المقر
-ping 192.168.10.10
+this is a shell script which will be sourced at boot
+hostname PC-BR1
+configurable user account
+USERNAME=cisco
+PASSWORD=cisco
+ip addr add 192.168.20.10/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.20.1
 ```
 
 #### 3. جهاز كمبيوتر الفرع الثاني (BR2-PC)
 ```bash
-sudo ip addr add 192.168.30.10/24 dev eth0
-sudo ip link set eth0 up
-sudo ip route add default via 192.168.30.1
-
-# اختبار الاتصال المباشر (Spoke-to-Spoke) إلى الفرع الأول
-ping 192.168.20.10
+this is a shell script which will be sourced at boot
+hostname PC-BR2
+configurable user account
+USERNAME=cisco
+PASSWORD=cisco
+ip addr add 192.168.30.10/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.30.1
 ```
 
 #### 4. جهاز الموظف عن بعد (Remote-PC)
 ```bash
 # تعيين IP عام للوصول للإنترنت
-sudo ip addr add 198.51.100.10/24 dev eth0
-sudo ip link set eth0 up
-sudo ip route add default via 198.51.100.1
+this is a shell script which will be sourced at boot
+hostname Remote-PC
+configurable user account
+USERNAME=cisco
+PASSWORD=cisco
+ip addr add 198.51.100.10/24 dev eth0
+ip link set eth0 up
+ip route add default via 198.51.100.1
 
 # إعدادات AnyConnect (تتم عبر واجهة المستخدم أو سطر الأوامر الخاص بالعميل)
 # في بيئة CML، يمكن تثبيت عميل AnyConnect Linux وتشغيله بالأمر:
