@@ -1,7 +1,4 @@
-# المحتوى التدريبي: تقنيات ضبط جودة الخدمة (QoS Techniques)
-**المرجع:** Phase 5 – Advanced Cisco Enterprise (Weeks 21–30)
-**المقرر:** CCNP Enterprise Security (Core + Concentration)
-**الوحدة:** Enterprise Core (ENCOR 350-401)
+# تقنيات ضبط جودة الخدمة (QoS Techniques)
 
 ## 1. مقدمة (Introduction)
 
