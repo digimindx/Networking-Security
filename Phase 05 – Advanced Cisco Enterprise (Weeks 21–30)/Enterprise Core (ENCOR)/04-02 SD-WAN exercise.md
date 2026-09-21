@@ -269,37 +269,42 @@ write_files:
 
 **التكوين لـ cEdge2 (IOS XE CLI):**
 ```text
-sdwan
-system
-  system-ip 192.168.1.12
-  site-id 12
-  exit
-organization
-  name Lab_Org
-  domain-name lab.local
-  exit
-vbond
-  address 10.0.0.1
-  local-address 10.0.0.12
-  exit
-interface GigabitEthernet1
-  no shutdown
-  ip address 10.0.0.12 255.255.255.0
-  exit
-interface GigabitEthernet1
-  tunnel-interface
-    encapsulation ipsec
-    color biz-internet
-    no allow-service all
-    allow-service vbond
-    allow-service omp
-    exit
-  exit
-router omp
-  no shutdown
-  exit
-end
-write memory
+#cloud-config
+write_files:
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <host-name>vEdge-R2</host-name>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+          </user>
+          <user>
+            <name>cisco</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+            <group>netadmin</group>
+          </user>
+        </aaa>
+      </system>
+      <viptela xmlns="http://viptela.com/viptela">
+        <system>
+          <system-ip>192.168.1.12</system-ip>
+          <site-id>12</site-id>
+        </system>
+        <vbond>
+          <local-address>10.0.0.12</local-address>
+          <address>
+            <ipv4-address>10.0.0.1</ipv4-address>
+          </address>
+        </vbond>
+        <organization>
+          <name>Lab_Org</name>
+          <domain-name>lab.local</domain-name>
+        </organization>
+      </viptela>
+    </config>
 ```
 
 **الشرح التفصيلي لإعدادات cEdge:**
