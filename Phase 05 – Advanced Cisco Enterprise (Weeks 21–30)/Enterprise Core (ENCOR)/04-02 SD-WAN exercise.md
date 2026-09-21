@@ -89,23 +89,31 @@ graph TD
 يعتبر vBond نقطة الدخول الأولى. يقوم بالمصادقة الأولية (Initial Authentication) وتوزيع عناوين الـ Controllers.
 
 **التكوين (Viptela CLI):**
-```text
-# الدخول لوضع التكوين
-configure
-
-# تحديد عنوان IP الخاص بـ vBond والذي ستعرفه الأجهزة مسبقاً
-orchestrator
-  local-address 10.0.0.1
-  exit
-
-# تحديد اسم المنظمة والنطاق للمصادقة
-organization
-  name Lab_Org
-  domain-name lab.local
-  exit
-
-# حفظ التكوين وإعادة تشغيل الخدمة
-commit
+```xml
+#cloud-config
+write_files:
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <host-name>vBond-Orchestrator</host-name>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>$6$rounds=4096$viptela$QwErTyUiOpAsDfGhJkLzXcVbNm1234567890abcdefghijklmnopqrstuvwxyz</password>
+          </user>
+        </aaa>
+      </system>
+      <viptela xmlns="http://viptela.com/viptela">
+        <orchestrator>
+          <local-address>10.0.0.1</local-address>
+        </orchestrator>
+        <organization>
+          <name>Lab_Org</name>
+          <domain-name>lab.local</domain-name>
+        </organization>
+      </viptela>
+    </config>
 ```
 **الشرح:** 
 تم تعيين `local-address` ليعرف الجهاز عنوانه في طبقة النقل (Transport Plane). تم تحديد `organization name` و `domain-name` لأن أي جهاز يحاول الانضمام للشبكة يجب أن يتطابق مع هذه المعاملات لضمان الأمان الهوياتي (Identity Security).
@@ -114,27 +122,50 @@ commit
 يعمل vSmart كعقل الشبكة، حيث يبادل معلومات التوجيه عبر بروتوكول OMP ويوزع سياسات التوجيه.
 
 **التكوين (Viptela CLI):**
-```text
-configure
-
-# توجيه vSmart ليعرف عنوان vBond للاتصال به
-vbond
-  local-address 10.0.0.2
-  address 10.0.0.1
-  exit
-
-# إعدادات بروتوكول OMP لتوزيع المسارات
-omp
-  advertise ipv4 bgp
-  advertise ipv4 ospf
-  exit
-
-organization
-  name Lab_Org
-  domain-name lab.local
-  exit
-
-commit
+```xml
+#cloud-config
+write_files:
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <host-name>vSmart-Controller</host-name>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+          </user>
+          <user>
+            <name>cisco</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+            <group>netadmin</group>
+          </user>
+        </aaa>
+      </system>
+      <viptela xmlns="http://viptela.com/viptela">
+        <system>
+          <system-ip>192.168.1.2</system-ip>
+          <site-id>0</site-id>
+        </system>
+        <vbond>
+          <local-address>10.0.0.2</local-address>
+          <address>
+            <ipv4-address>10.0.0.1</ipv4-address>
+          </address>
+        </vbond>
+        <organization>
+          <name>Lab_Org</name>
+          <domain-name>lab.local</domain-name>
+        </organization>
+        <omp>
+          <advertise>
+            <ipv4>true</ipv4>
+            <bgp>true</bgp>
+            <ospf>true</ospf>
+          </advertise>
+        </omp>
+      </viptela>
+    </config>
 ```
 **الشرح:**
 أمر `vbond address` يخبر الـ Control Plane بعنوان الـ Orchestrator لبدء عملية الاكتشاف (Device Discovery). تم تفعيل `omp` لتوزيع مسارات BGP و OSPF القادمة من الفروع عبر طبقة التراكب (Overlay Plane).
@@ -143,21 +174,52 @@ commit
 vManage هو الواجهة المركزية (Centralized Management GUI). في CML، يتم التكوين المبدئي عبر CLI ثم إكمال الباقي عبر المتصفح.
 
 **التكوين المبدئي (Viptela CLI):**
-```text
-configure
-
-# توجيه vManage ليعرف عنوان vBond
-vbond
-  local-address 10.0.0.3
-  address 10.0.0.1
-  exit
-
-organization
-  name Lab_Org
-  domain-name lab.local
-  exit
-
-commit
+```xml
+#cloud-config
+fs_setup:
+- device: "/dev/sdb"
+  partition: "none"
+  filesystem: "ext4"
+mounts:
+- [ sdb, /opt/data ]
+write_files:
+- path: /opt/web-app/etc/persona
+  owner: vmanage:vmanage-admin
+  permissions: '0644'
+  content: '{"persona":"COMPUTE_AND_DATA"}'
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <host-name>vManage-Manager</host-name>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+          </user>
+          <user>
+            <name>cisco</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+            <group>netadmin</group>
+          </user>
+        </aaa>
+      </system>
+      <viptela xmlns="http://viptela.com/viptela">
+        <system>
+          <system-ip>192.168.1.3</system-ip>
+        </system>
+        <vbond>
+          <local-address>10.0.0.3</local-address>
+          <address>
+            <ipv4-address>10.0.0.1</ipv4-address>
+          </address>
+        </vbond>
+        <organization>
+          <name>Lab_Org</name>
+          <domain-name>lab.local</domain-name>
+        </organization>
+      </viptela>
+    </config>
 ```
 **الشرح:**
 بعد هذا التكوين المبدئي، يمكن الوصول إلى vManage عبر المتصفح باستخدام العنوان `https://10.0.0.3`. من خلال الواجهة الرسومية، سيتم لاحقاً اعتماد الشهادات الرقمية (Certificates) لأجهزة cEdge، وإنشاء قوالب الأجهزة (Device Templates)، وتطبيق السياسات المركزية (Centralized Policies).
@@ -166,53 +228,43 @@ commit
 أجهزة cEdge تعمل بنظام IOS XE. سنقوم بتكوين cEdge1، وcEdge2 بنفس المنطق مع تغيير عناوين IP.
 
 **التكوين لـ cEdge1 (IOS XE CLI):**
-```text
-! الدخول لوضع SD-WAN
-sdwan
-
-! تحديد عنوان النظام (System IP) ومعرف الجهاز
-system
-  system-ip 192.168.1.11
-  site-id 11
-  exit
-
-! تحديد معلومات المنظمة
-organization
-  name Lab_Org
-  domain-name lab.local
-  exit
-
-! تحديد عنوان vBond للاتصال المبدئي (Bootstrapping)
-vbond
-  address 10.0.0.1
-  local-address 10.0.0.11
-  exit
-
-! تفعيل واجهة النقل (Transport Interface)
-interface GigabitEthernet1
-  no shutdown
-  ip address 10.0.0.11 255.255.255.0
-  exit
-
-! ربط الواجهة بـ SD-WAN كواجهة نقل
-interface GigabitEthernet1
-  tunnel-interface
-    encapsulation ipsec
-    color biz-internet
-    no allow-service all
-    allow-service vbond
-    allow-service omp
-    exit
-  exit
-
-! تفعيل التوجيه (OMP) لاستقبال المسارات من vSmart
-router omp
-  no shutdown
-  exit
-
-! حفظ التكوين
-end
-write memory
+```xml
+#cloud-config
+write_files:
+- path: /etc/confd/init/zcloud.xml
+  content: |
+    <config xmlns="http://tail-f.com/ns/config/1.0">
+      <system xmlns="http://viptela.com/system">
+        <host-name>vEdge-R1</host-name>
+        <aaa>
+          <user>
+            <name>admin</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+          </user>
+          <user>
+            <name>cisco</name>
+            <password>$6$0270fb81b5b56c1e$LOaD1.Xj7zlP9TwMwZ5sMI1rtsU7b.TTtk3vetlfwVetEq7xmFkSvRCnsCn0rp14WYMC0ydfZtwiXNJL8mVr9/</password>
+            <group>netadmin</group>
+          </user>
+        </aaa>
+      </system>
+      <viptela xmlns="http://viptela.com/viptela">
+        <system>
+          <system-ip>192.168.1.11</system-ip>
+          <site-id>11</site-id>
+        </system>
+        <vbond>
+          <local-address>10.0.0.11</local-address>
+          <address>
+            <ipv4-address>10.0.0.1</ipv4-address>
+          </address>
+        </vbond>
+        <organization>
+          <name>Lab_Org</name>
+          <domain-name>lab.local</domain-name>
+        </organization>
+      </viptela>
+    </config>
 ```
 
 **التكوين لـ cEdge2 (IOS XE CLI):**
