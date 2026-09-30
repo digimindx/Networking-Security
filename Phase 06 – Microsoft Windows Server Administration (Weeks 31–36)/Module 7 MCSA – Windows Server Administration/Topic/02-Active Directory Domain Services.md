@@ -1,108 +1,141 @@
-# المحتوى التدريبي: خدمات مجال خدمات نشطة (Active Directory Domain Services)
-**المرجع:** Phase 6 – Microsoft Windows Server Administration (Module 7)
+### المستوى الأول: الأساسيات والمفاهيم الجوهرية (Foundations & Core Concepts)
 
-## 1. مقدمة في خدمات مجال خدمات نشطة (Active Directory Domain Services)
+تُعد خدمات مجال خدمات نشطة (Active Directory Domain Services) أو اختصاراً (AD DS)، قاعدة البيانات المركزية والمدير الرئيسي لموارد الشبكة في بيئة ويندوز (Windows Environment). 
 
-تُعد خدمات مجال خدمات نشطة (Active Directory Domain Services) أو ما يُعرف اختصاراً بـ AD DS، قاعدة البيانات المركزية التي تخزن معلومات حول موارد الشبكة (Network Resources) وتسهل إدارة هذه الموارد من قبل مسؤولي النظام (System Administrators). تعمل هذه الخدمة كجزء من بنية ويندوز النطاقية (Windows Domain Architecture).
+الأهداف الرئيسية للخدمة:
+1. المصادقة (Authentication): التحقق من هوية المستخدمين والأجهزة قبل السماح لهم بالدخول.
+2. الترخيص (Authorization): تحديد ما يمكن للمستخدم المصادق عليه الوصول إليه أو تعديله.
+3. إدارة الكائنات (Object Management): التحكم في دورة حياة الكائنات مثل المستخدمين (Users)، المجموعات (Groups)، وأجهزة الحاسوب (Computers).
 
-**الأهداف الرئيسية لـ AD DS:**
-*   **المصادقة (Authentication):** التحقق من هوية المستخدمين والأجهزة.
-*   **الترخيص (Authorization):** تحديد الصلاحيات والوصول إلى الموارد.
-*   **إدارة الكائنات (Object Management):** إنشاء وتعديل وحذف الكائنات (Users, Groups, Computers).
+#### البنية المنطقية (Logical Structure)
+لفهم كيفية تنظيم الشبكة، يجب استيعاب التسلسل الهرمي التالي:
+* الغابة (Forest): أعلى مستوى من التسلسل، وتمثل حدود الأمان (Security Boundaries) الكاملة. تشترك جميع مكونات الغابة في مخطط واحد (Schema) ودليل تكوين عام (Configuration Container).
+* الشجرة (Tree): مجموعة من النطاقات (Domains) التي تشارك نفس مساحة الأسماء (Namespace) بشكل متسلسل (مثل: company.com و hr.company.com).
+* النطاق (Domain): الوحدة الإدارية الأساسية التي تحتوي على الكائنات، وتشترك في قاعدة بيانات واحدة (Directory Database) وسياسات أمان موحدة.
+* الوحدة التنظيمية (Organizational Unit - OU): حاوية فرعية داخل النطاق تُستخدم لتنظيم الكائنات وتطبيق سياسات المجموعة (Group Policy Objects - GPOs) بشكل دقيق.
 
----
+```mermaid
+graph TD
+    Forest[Forest - الغابة] --> Tree1[Tree - الشجرة: company.com]
+    Tree1 --> Domain1[Domain - النطاق: company.com]
+    Tree1 --> Domain2[Domain - النطاق: hr.company.com]
+    Domain1 --> OU1[OU - الوحدة التنظيمية: IT]
+    Domain1 --> OU2[OU - الوحدة التنظيمية: HR]
+    Domain2 --> OU3[OU - الوحدة التنظيمية: Payroll]
+```
 
-## 2. المفاهيم الأساسية والبنية (Architecture)
+### المستوى الثاني: الآليات المتقدمة وأدوار العمليات الرئيسية (Advanced Mechanics & FSMO Roles)
 
-لفهم AD DS، يجب استيعاب الهرمية الموجودة داخل البنية:
+في البيئات التي تحتوي على أكثر من متحكم مجال (Domain Controller)، يجب ضمان عدم تضارب البيانات عند إجراء تغييرات حرجة. هنا تأتي أهمية أدوار العمليات الرئيسية المرنة (Flexible Single Master Operations - FSMO). تنقسم هذه الأدوار إلى مستويين:
 
-1.  **الغابة (Forest):**
-    أعلى مستوى من التسلسل في هيكلية AD DS. تعتبر الغابة حدوداً أماناً (Security Boundaries) مستقلة. تحتوي الغابة على مخطط (Schema) واحد وتاريخ مصادقة (Authentication History).
+#### أدوار مستوى الغابة (Forest-Wide Roles)
+يوجد دور واحد فقط لكل غابة:
+1. سيد المخطط (Schema Master): المسؤول الوحيد عن تحديث أو تعديل المخطط (Schema) والذي يحدد تعريفات الكائنات وخصائصها (Attributes).
+2. سيد تسمية النطاق (Domain Naming Master): المسؤول عن إضافة أو حذف نطاقات (Domains) جديدة داخل الغابة.
 
-2.  **النطاق (Domain):**
-    وحدة إدارية أساسية تحتوي على مجموعة من الكائنات (Users, Computers, Groups). يتشارك النطاق مخططاً (Schema) وقاعدة بيانات (Directory Database).
+#### أدوار مستوى النطاق (Domain-Wide Roles)
+يوجد دور واحد لكل نطاق:
+1. سيد معرف الموارد (RID Master): يخصص حزم من معرفات الموارد (Resource IDs) لمتحكمي المجال لضمان أن كل كائن جديد (مثل مستخدم) يحصل على معرف أمان (SID) فريد.
+2. سيد البنية التحتية (Infrastructure Master): مسؤول عن تحديث المراجع (References) للكائنات غير العالمية (Non-Global Objects) عند نقلها بين النطاقات.
+3. محاكي PDC (PDC Emulator): يتولى مهام التوافق مع الأنظمة القديمة، ويدير مزامنة الوقت (Time Synchronization)، وتغييرات كلمات المرور (Password Resets)، وتطبيق سياسات كلمات المرور (Password Policies).
 
-3.  **الشجرة (Tree):**
-    مجموعة من النطاقات (Domains) التي تشارك نفس نطاق الاسم (Namespace) في تسلسل هرمي (مثلاً: hr.company.com و sales.company.com).
+```mermaid
+graph TD
+    subgraph Forest_Wide_Roles [أدوار مستوى الغابة Forest-Wide Roles]
+        SM[Schema Master - سيد المخطط]
+        DNM[Domain Naming Master - سيد تسمية النطاق]
+    end
 
-4.  **الوحدة التنظيمية (Organizational Unit - OU):**
-    حاوية (Container) داخل النطاق تستخدم لتنظيم الكائنات وتطبيق كائنات السياسة الجماعية (Group Policy Objects - GPOs) عليها.
+    subgraph Domain_Wide_Roles [أدوار مستوى النطاق Domain-Wide Roles]
+        RM[RID Master - سيد RID]
+        IM[Infrastructure Master - سيد البنية التحتية]
+        PDC[PDC Emulator - محاكي PDC]
+    end
+```
 
-5.  **الفهرس العام (Global Catalog):**
-    خادم (Server) يحتوي على نسخة قابلة للتعديل (Writable) من البيانات الخاصة بالنطاق المضيف، ونسخة للقراءة فقط (Read-Only) عن جميع الكائنات في الغابة. يستخدم للبحث ولعملية المصادقة اللامركزية.
+### المستوى الثالث: التثبيت والتكوين العملي (Installation & Configuration Practical)
 
-6.  **المخطط (Schema):**
-    يحدد نوع الكائنات (مثل User, Printer) والخصائص (Attributes) التي يمكن أن يمتلكها كل كائن.
+لتحويل خادم ويندوز (Windows Server) إلى متحكم مجال (Domain Controller)، يجب اتباع تسلسل دقيق.
 
----
+**المتطلبات الأساسية:**
+* تعيين عنوان IP ثابت (Static IP Address).
+* تعيين خادم نظام أسماء النطاقات (DNS Server) بشكل صحيح.
 
-## 3. أدوار FSMO (Flexible Single Master Operations)
+**التمرين العملي الأول: إنشاء غابة جديدة (New Forest)**
+1. افتح مدير الخادم (Server Manager).
+2. اختر إضافة الأدوار والميزات (Add Roles and Features).
+3. حدد دور خدمات مجال خدمات نشطة (Active Directory Domain Services) وقم بتثبيته.
+4. بعد التثبيت، انقر على أيقونة التنبيه واختر "ترقية هذا الخادم إلى متحكم مجال" (Promote this server to a domain controller).
+5. اختر "إضافة غابة جديدة" (Add a new forest) واكتب اسم النطاق الجذري (Root domain name) مثل `corp.local`.
+6. اتبع المعالج لتحديد كلمة مرور استعادة خدمات الدليل (DSRM Password)، ثم انقر على تثبيت (Install) وإعادة التشغيل.
 
-في بيئات AD DS، توجد أدوار محددة (Roles) تدير عمليات التحديث الحرجة لضمان عدم تضارب البيانات. يجب معرفة الأدوار الخمسة:
+### المستوى الرابع: الإدارة اليومية وأتمتة المهام (Day-to-Day Management & Automation)
 
-1.  **سيد مخطط الغابة (Schema Master):** مسؤول عن أي تغيير في مخطط AD DS.
-2.  **سيد تسمية النطاق (Domain Naming Master):** مسؤول عن إضافة أو حذف نطاقات من الغابة.
-3.  **سيد RID (RID Master):** يخصص نطاقات من معرف الموارد (Resource IDs) لمتحكمي المجال (Domain Controllers) لإنشاء معرفات فريدة للمستخدمين والمجموعات.
-4.  **سيد البنية التحتية (Infrastructure Master):** يضمن أن الكائنات غير العالمية (Non-Global Objects) مثل المجموعات والأجهزة محدثة بشكل صحيح في النطاق.
-5.  **محاكي PDC (PDC Emulator):** يحاكي خادم NT4.0، مسؤول عن المزامنة الزمنية (Time Synchronization)، وكسر كلمات المرور (Password Resets)، وتطبيق سياسات كلمة المرور (Password Policies).
+يمكن إدارة البيئة عبر الواجهة الرسومية (Active Directory Users and Computers - ADUC) أو عبر سطر الأوامر المتقدم (PowerShell). يُفضل استخدام (PowerShell) للأتمتة والسرعة.
 
----
+**التمرين العملي الثاني: إنشاء هيكل تنظيمي ومستخدمين عبر PowerShell**
 
-## 4. تثبيت وتكوين خدمات مجال خدمات نشطة (Installation & Configuration)
+الخطوة 1: إنشاء وحدات تنظيمية (OUs) للأقسام المختلفة.
+```powershell
+# إنشاء وحدة تنظيمية للقسم التقني
+New-ADOrganizationalUnit -Name "IT_Department" -Path "DC=corp,DC=local"
 
-لترقية خادم (Server) ليصبح متحكماً في المجال (Domain Controller)، يتم اتباع الخطوات التالية:
+# إنشاء وحدة تنظيمية للقسم المالي
+New-ADOrganizationalUnit -Name "Finance_Department" -Path "DC=corp,DC=local"
+```
 
-1.  **إضافة الدور (Add Roles):** من خلال مدير الخادم (Server Manager)، يتم إضافة دور "Active Directory Domain Services".
-2.  **التثبيت (Installation):** يتم تثبيت المكونات المطلوبة التي تشمل عادةً خدمات DNS (Domain Name System).
-3.  **الترقية (Promote to Domain Controller):**
-    *   **New Forest:** إنشاء غابة جديدة (يتم تنفيذه عادةً على الخادم الأول).
-    *   **Add Domain to Existing Forest:** إضافة نطاق فرعي لغابة موجودة.
-    *   **Add Domain Controller to Existing Domain:** إضافة متحكم في مجال لنطاق موجود.
-4.  **إعادة التشغيل:** بعد اكتمال الخطوات، يُطلب إعادة تشغيل الخادم.
+الخطوة 2: إنشاء مستخدمين جدد وتعيين خصائصهم.
+```powershell
+# إنشاء مستخدم جديد في القسم التقني
+New-ADUser -Name "Ahmed.Ali" -SamAccountName "ahmed.ali" -UserPrincipalName "ahmed.ali@corp.local" -GivenName "Ahmed" -Surname "Ali" -Path "OU=IT_Department,DC=corp,DC=local" -AccountPassword (ConvertTo-SecureString "P@ssw0rd123" -AsPlainText -Force) -Enabled $true
 
----
+# إنشاء مستخدم جديد في القسم المالي
+New-ADUser -Name "Sara.Mohamed" -SamAccountName "sara.mohamed" -UserPrincipalName "sara.mohamed@corp.local" -GivenName "Sara" -Surname "Mohamed" -Path "OU=Finance_Department,DC=corp,DC=local" -AccountPassword (ConvertTo-SecureString "P@ssw0rd456" -AsPlainText -Force) -Enabled $true
+```
 
-## 5. إدارة خدمات مجال خدمات نشطة (Management)
+الخطوة 3: إنشاء مجموعة أمان (Security Group) وإضافة المستخدمين إليها.
+```powershell
+# إنشاء مجموعة للمدراء
+New-ADGroup -Name "IT_Managers" -GroupScope Global -GroupCategory Security -Path "OU=IT_Department,DC=corp,DC=local"
 
-يمكن إدارة AD DS عبر أدوات رسومية أو سطر الأوامر.
+# إضافة المستخدم أحمد إلى المجموعة
+Add-ADGroupMember -Identity "IT_Managers" -Members "ahmed.ali"
+```
 
-### أ. أدوات إدارة مجال خدمات نشطة (Active Directory Users and Computers - ADUC)
-هي الواجهة الرسومية الأساسية المستخدمة لـ:
-*   إنشاء المستخدمين (Users) والمجموعات (Groups).
-*   إنشاء الوحدات التنظيمية (OUs).
-*   ربط كائنات السياسة الجماعية (GPOs) بالوحدات التنظيمية.
-*   إدارة الأجهزة (Computers) المسجلة في الدومين.
+### المستوى الخامس: الأمان، النسخ الاحتياطي، واستكشاف الأخطاء (Security, Backup & Troubleshooting)
 
-### ب. إدارة عبر PowerShell
-تعتبر PowerShell الأداة الأكثر كفاءة للمسؤولين المتقدمين. تتضمن الأوامر الرئيسية:
-*   `Get-ADDomain`: استعلام عن معلومات النطاق الحالي.
-*   `New-ADUser`: إنشاء مستخدم جديد.
-*   `Move-ADObject`: نقل كائن من وحدة تنظيمية إلى أخرى.
-*   `Set-ADUser`: تعديل خصائص مستخدم (مثل كلمة المرور أو الصلاحيات).
-*   `Get-ADGroupMember`: عرض الأعضاء داخل مجموعة معينة.
+#### أفضل ممارسات الأمان (Security Best Practices)
+1. مبدأ أقل صلاحية (Least Privilege Principle): امنح المستخدمين الحد الأدنى من الصلاحيات اللازمة لأداء مهامهم فقط.
+2. استخدام المجموعات (Groups): لا تمنح الصلاحيات للمستخدمين بشكل مباشر (Direct Permissions)، بل أضفهم إلى مجموعات (Groups) وامنح الصلاحيات للمجموعات.
+3. الحسابات الإدارية المخصصة (Privileged Accounts): افصل بين الحساب اليومي (Daily Account) والحساب الإداري (Admin Account). لا تستخدم حساب المدير العام (Domain Admin) لتصفح الإنترنت أو قراءة البريد.
+4. التدقيق (Auditing): فعّل سياسات التدقيق المتقدم (Advanced Audit Policy) لمراقبة تغييرات الكائنات ومحاولات الدخول الفاشلة.
 
----
+#### النسخ الاحتياطي (Backup)
+يعتمد النسخ الاحتياطي لـ (AD DS) على خدمة (Volume Shadow Copy Service - VSS). يجب إجراء نسخ احتياطي لحالة النظام (System State) بشكل دوري لضمان القدرة على الاستعادة في حال تلف قاعدة البيانات.
 
-## 6. الأمان وأفضل الممارسات (Security & Best Practices)
+**التمرين العملي الثالث: استكشاف أخطاء المزامنة (Replication Troubleshooting)**
+عند وجود أكثر من متحكم مجال، يجب التأكد من نجاح عملية المزامنة (Replication).
 
-1.  **تطبيق مبدأ أقل صلاحية (Least Privilege Principle):** لا تمنح المستخدمين أو المجموعات صلاحيات أوسع مما يحتاجونه للقيام بمهامهم.
-2.  **استخدام المجموعات (Groups):** بدلاً من إعطاء الصلاحيات للمستخدمين مباشرة، يتم إضافتهم لمجموعات (Group) ومنح الصلاحيات للمجموعة.
-3.  **الحسابات الإدارية المخصصة (Privileged Accounts):** يجب استخدام حسابات إدارية منفصلة لإدارة AD DS وليس الحسابات اليومية.
-4.  **التدقيق (Auditing):** تفعيل سجلات التدقيق (Audit Logs) لمراقبة محاولات الدخول الفاشلة والتغييرات الحساسة في الهيكلية.
-5.  **النسخ الاحتياطي (Backup):** النسخ الاحتياطي لبيانات AD DS يعتمد على نظام VSS (Volume Shadow Copy Service). يجب التأكد من عمل نسخ احتياطية لـ System State.
+الخطوة 1: استخدام أداة تشخيص متحكم المجال (Dcdiag).
+```cmd
+dcdiag /v /c /d /e
+```
+هذا الأمر يشغل اختبارات شاملة (Comprehensive Tests) ويظهر الأخطاء التفصيلية (Detailed Errors).
 
----
+الخطوة 2: التحقق من حالة المزامنة باستخدام (Repadmin).
+```cmd
+repadmin /replsummary
+```
+يظهر هذا الأمر ملخصاً لحالة المزامنة بين جميع متحكمي المجال، ويوضح عدد حالات الفشل (Failures) إن وجدت.
 
-## 7. استكشاف الأخطاء وإصلاحها (Troubleshooting)
+الخطوة 3: إجبار المزامنة فورية باستخدام (Dsrepl).
+```cmd
+repadmin /syncall /AdeP
+```
+يقوم هذا الأمر بفرض المزامنة (Force Replication) لجميع أقسام الدليل (Partitions) عبر جميع متحكمي المجال.
 
-أثناء إدارة AD DS، قد تواجه مشاكل تتطلب أدوات تشخيصية:
+الخطوة 4: مراجعة السجلات (Event Viewer).
+افتح عارض الأحداث (Event Viewer)، وانتقل إلى سجلات ويندوز (Windows Logs) ثم خدمة الدليل (Directory Service). ابحث عن الأخطاء (Errors) والتحذيرات (Warnings) التي قد تشير إلى مشاكل في الاتصال بـ (DNS) أو مشاكل في المزامنة.
 
-*   **Dcdiag:** أداة سطر أوامر (Command-line tool) تقوم بتشغيل مجموعة من الاختبارات للتأكد من صحة إعدادات متحكم المجال (Domain Controller).
-*   **Repadmin:** تستخدم لمراقبة ومعالجة مشاكل replication (المزامنة) بين متحكمي المجال.
-*   **Dsrepl:** تستخدم لإجبار عملية المزامنة (Force Replication).
-*   **Event Viewer:** مراجعة سجلات الأحداث (Event Logs) تحت قسم Directory Service لمعرفة أخطاء AD DS.
-
----
-
-**خاتمة الدورة:**
-يجب على الطالب إتقان كيفية تصميم هيكلية AD DS (Forest/Domain/OU Design) واختيار أدوار FSMO المناسبة، بالإضافة إلى القدرة على استخدام PowerShell لحل المشكلات المعقدة، حيث أن هذا الأساس هو حجر الزاوية في إدارة البنية التحتية لتقنية المعلومات (IT Infrastructure).
+### خاتمة
+إتقان خدمات مجال خدمات نشطة (Active Directory Domain Services) يتطلب فهم البنية المنطقية (Logical Structure)، وإدارة أدوار (FSMO) بحذر، والاعتماد على (PowerShell) لأتمتة المهام الإدارية، مع تطبيق صارم لمبادئ الأمان (Security Principles). هذا الأساس هو حجر الزاوية لبنية تحتية تقنية (IT Infrastructure) مستقرة وآمنة.

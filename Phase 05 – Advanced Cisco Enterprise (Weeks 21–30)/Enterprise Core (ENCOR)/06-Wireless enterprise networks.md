@@ -4,10 +4,24 @@
 
 تتطلب الشبكات اللاسلكية في بيئة المؤسسات (Enterprise) بنية تحتية قابلة للتوسع، مركزية الإدارة، وعالية الأمان. تنقسم البنى الرئيسية إلى فئتين:
 
+```mermaid
+graph TD
+    Internet((Internet))
+    CCC[Cisco Catalyst Center]
+    WLC[Wireless LAN Controller]
+    AP[Access Points]
+
+    Internet <-->|Management & Control| CCC
+    CCC <-->|Centralized Management| WLC
+    WLC <-->|CAPWAP Protocol| AP
+```
+
 ### 1. بنية المراقب (Controller-Based Architecture)
 تعتمد على جهاز مركزي (أو مجموعة أجهزة) لإدارة نقاط الوصول (Access Points - APs) وتوزيع الإعدادات.
-*   **Wireless LAN Controller (WLC):** العقل المدبر. يتولى مهام المصادقة، إدارة الطيف (RF Management)، وتوزيع الإعدادات الأمنية.
-*   **Access Point (AP):** الجهاز الطرفي الذي يبث الإشارة ويستقبلها. في هذه البنية، يُسمى "Lightweight AP" لأنه يعتمد على الـ WLC في معظم عملياته.
+*   **Wireless LAN Controller (WLC):**
+   العقل المدبر. يتولى مهام المصادقة، إدارة الطيف (RF Management)، وتوزيع الإعدادات الأمنية.
+*   **Access Point (AP):**
+   الجهاز الطرفي الذي يبث الإشارة ويستقبلها. في هذه البنية، يُسمى "Lightweight AP" لأنه يعتمد على الـ WLC في معظم عملياته.
 *   **بروتوكول الاتصال:** يتواصل الـ AP مع الـ WLC باستخدام بروتوكول **CAPWAP**.
 
 ### 2. البنية السحابية (Cloud-Based Architecture)

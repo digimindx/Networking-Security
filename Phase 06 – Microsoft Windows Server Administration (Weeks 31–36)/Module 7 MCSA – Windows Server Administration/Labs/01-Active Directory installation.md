@@ -1,11 +1,4 @@
-# دليل عملي: تثبيت خدمات الدليل النشط (Active Directory Domain Services)
-
-**السياق:** دورة Phase 6 – إدارة خوادم مايكروسوفت ويندوز (Windows Server Administration)
-**الوحدة:** Module 7 - MCSA
-**الممارسة:** 01 - تثبيت وتكوين (Active Directory)
-
-## 1. مقدمة
-تهدف هذه الممارسة إلى تعلم كيفية تحويل خادم ويندوز (Windows Server) عادي إلى "متحكم في مجال" (Domain Controller) عبر تثبيت دور (Role) خدمات الدليل النشط (Active Directory Domain Services) وتكوينه كجزء من "غابة" (Forest) جديدة.
+# تدريب عملي: تثبيت خدمات الدليل النشط (Active Directory Domain Services)
 
 ## 2. المتطلبات المسبقة (Prerequisites)
 قبل البدء، يجب التأكد من توفر التالي:
